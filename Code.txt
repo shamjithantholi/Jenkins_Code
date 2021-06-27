@@ -1,0 +1,51 @@
+Python
+===============
+#Stop the Go build
+currentBuildNum=`curl --user shamjith:shamjith http://3.224.58.131:8080/job/go/lastBuild/api/json | jq -r '.displayName'`
+currentBuildNum="${currentBuildNum:1}"
+echo $currentBuildNum
+curl -X POST -L --user shamjith:117888e31a5e625220881c9341fdc9c5a1 http://3.224.58.131:8080/job/go/$currentBuildNum/stop
+
+
+
+#code build -- on all conditions
+cd python
+make deps
+PATH1="/var/lib/jenkins/.local/bin"
+PATH="$PATH:$PATH1"
+pipenv install
+pip3 install wheel
+make test build
+#artifact publish 
+commitid=`git log --format="%H" -n 1`
+commitcheck=`git log -a remotes/origin/master | grep $commitid` || true
+if [ ! -z "$commitcheck" ]; then 
+   make publish
+else
+   echo ""    
+fi   
+
+——————————————
+GO
+======
+#Stop the python build
+ls -lrt go
+currentBuildNum=`curl --user shamjith:shamjith http://3.224.58.131:8080/job/python/lastBuild/api/json | jq -r '.displayName'`
+currentBuildNum="${currentBuildNum:1}"
+echo $currentBuildNum
+curl -X POST -L --user shamjith:117888e31a5e625220881c9341fdc9c5a1 http://3.224.58.131:8080/job/python/$currentBuildNum/stop
+sleep 600s
+
+
+cd go
+make all
+
+#artifact publish 
+commitid=`git log --format="%H" -n 1`
+commitcheck=`git log -a remotes/origin/master | grep $commitid` || true
+if [ ! -z "$commitcheck" ]; then 
+   echo "starting publish >>>>>>>"
+   make publish
+else
+   echo ""    
+fi   
